@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.hits.studentintership.core.Event
+import ru.hits.studentintership.core.EventQueue
 import ru.hits.studentintership.data.meetings.MeetingDto
 import ru.hits.studentintership.data.meetings.MeetingsService
 import ru.hits.studentintership.presentation.meetings.model.DayEntity
+import ru.hits.studentintership.presentation.meetings.model.MeetingsScreenEvent
 import ru.hits.studentintership.presentation.meetings.model.MeetingsState
 import ru.hits.studentintership.presentation.meetings.model.TimeSlotEntity
 import ru.hits.studentintership.presentation.meetings.model.WeekEntity
@@ -30,6 +33,12 @@ class MeetingsViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(createInitialState())
     val state = _state.asStateFlow()
+
+    val screenEvents: EventQueue = EventQueue()
+
+    fun offerEvent(event: Event) {
+        screenEvents.offerEvent(event)
+    }
 
     init {
         if (groupId != null)
@@ -52,354 +61,358 @@ class MeetingsViewModel @Inject constructor(
 
     fun getMeetings(groupId: String) = viewModelScope.launch {
 
-        val meetings = meetingsService.getMeetings(groupIds = listOf(groupId))
+        try {
+            val meetings = meetingsService.getMeetings(groupIds = listOf(groupId))
 
-        val mondayPairs: MutableList<MeetingDto> = mutableListOf()
-        meetings.forEach {
-            mondayPairs.addAll(it.mondayMeetings)
-        }
+            val mondayPairs: MutableList<MeetingDto> = mutableListOf()
+            meetings.forEach {
+                mondayPairs.addAll(it.mondayMeetings)
+            }
 
-        val tuesdayPairs: MutableList<MeetingDto> = mutableListOf()
-        meetings.forEach {
-            tuesdayPairs.addAll(it.tuesdayMeetings)
-        }
+            val tuesdayPairs: MutableList<MeetingDto> = mutableListOf()
+            meetings.forEach {
+                tuesdayPairs.addAll(it.tuesdayMeetings)
+            }
 
-        val wednesdayPairs: MutableList<MeetingDto> = mutableListOf()
-        meetings.forEach {
-            wednesdayPairs.addAll(it.wednesdayMeetings)
-        }
+            val wednesdayPairs: MutableList<MeetingDto> = mutableListOf()
+            meetings.forEach {
+                wednesdayPairs.addAll(it.wednesdayMeetings)
+            }
 
-        val thursdayPairs: MutableList<MeetingDto> = mutableListOf()
-        meetings.forEach {
-            thursdayPairs.addAll(it.thursdayMeetings)
-        }
+            val thursdayPairs: MutableList<MeetingDto> = mutableListOf()
+            meetings.forEach {
+                thursdayPairs.addAll(it.thursdayMeetings)
+            }
 
-        val fridayPairs: MutableList<MeetingDto> = mutableListOf()
-        meetings.forEach {
-            fridayPairs.addAll(it.fridayMeetings)
-        }
+            val fridayPairs: MutableList<MeetingDto> = mutableListOf()
+            meetings.forEach {
+                fridayPairs.addAll(it.fridayMeetings)
+            }
 
-        val saturdayPairs: MutableList<MeetingDto> = mutableListOf()
-        meetings.forEach {
-            saturdayPairs.addAll(it.saturdayMeetings)
-        }
+            val saturdayPairs: MutableList<MeetingDto> = mutableListOf()
+            meetings.forEach {
+                saturdayPairs.addAll(it.saturdayMeetings)
+            }
 
-        // slotNumber begins with 1
+            // slotNumber begins with 1
 
-        val mondaySlots = DayEntity(
-            weekDay = "Monday",
-            day = "",
-            countClasses = 0,
-            timeSlots = listOf(
-                TimeSlotEntity(
-                    slotNumber = 1,
-                    pairs = mondayPairs.filter {
-                        it.pairNumber == "FIRST"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 2,
-                    pairs = mondayPairs.filter {
-                        it.pairNumber == "SECOND"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 3,
-                    pairs = mondayPairs.filter {
-                        it.pairNumber == "THIRD"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 4,
-                    pairs = mondayPairs.filter {
-                        it.pairNumber == "FOURTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 5,
-                    pairs = mondayPairs.filter {
-                        it.pairNumber == "FIFTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 6,
-                    pairs = mondayPairs.filter {
-                        it.pairNumber == "SIXTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 7,
-                    pairs = mondayPairs.filter {
-                        it.pairNumber == "SEVENTH"
-                    }
-                ),
-            )
-        )
-
-        val tuesdaySlots = DayEntity(
-            weekDay = "Tuesday",
-            day = "",
-            countClasses = 0,
-            timeSlots = listOf(
-                TimeSlotEntity(
-                    slotNumber = 1,
-                    pairs = tuesdayPairs.filter {
-                        it.pairNumber == "FIRST"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 2,
-                    pairs = tuesdayPairs.filter {
-                        it.pairNumber == "SECOND"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 3,
-                    pairs = tuesdayPairs.filter {
-                        it.pairNumber == "THIRD"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 4,
-                    pairs = tuesdayPairs.filter {
-                        it.pairNumber == "FOURTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 5,
-                    pairs = tuesdayPairs.filter {
-                        it.pairNumber == "FIFTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 6,
-                    pairs = tuesdayPairs.filter {
-                        it.pairNumber == "SIXTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 7,
-                    pairs = tuesdayPairs.filter {
-                        it.pairNumber == "SEVENTH"
-                    }
-                ),
-            )
-        )
-
-        val wednesdaySlots = DayEntity(
-            weekDay = "Wednesday",
-            day = "",
-            countClasses = 0,
-            timeSlots = listOf(
-                TimeSlotEntity(
-                    slotNumber = 1,
-                    pairs = wednesdayPairs.filter {
-                        it.pairNumber == "FIRST"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 2,
-                    pairs = wednesdayPairs.filter {
-                        it.pairNumber == "SECOND"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 3,
-                    pairs = wednesdayPairs.filter {
-                        it.pairNumber == "THIRD"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 4,
-                    pairs = wednesdayPairs.filter {
-                        it.pairNumber == "FOURTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 5,
-                    pairs = wednesdayPairs.filter {
-                        it.pairNumber == "FIFTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 6,
-                    pairs = wednesdayPairs.filter {
-                        it.pairNumber == "SIXTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 7,
-                    pairs = wednesdayPairs.filter {
-                        it.pairNumber == "SEVENTH"
-                    }
-                ),
-            )
-        )
-
-        val thursdaySlots = DayEntity(
-            weekDay = "Thursday",
-            day = "",
-            countClasses = 0,
-            timeSlots = listOf(
-                TimeSlotEntity(
-                    slotNumber = 1,
-                    pairs = thursdayPairs.filter {
-                        it.pairNumber == "FIRST"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 2,
-                    pairs = thursdayPairs.filter {
-                        it.pairNumber == "SECOND"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 3,
-                    pairs = thursdayPairs.filter {
-                        it.pairNumber == "THIRD"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 4,
-                    pairs = thursdayPairs.filter {
-                        it.pairNumber == "FOURTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 5,
-                    pairs = thursdayPairs.filter {
-                        it.pairNumber == "FIFTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 6,
-                    pairs = thursdayPairs.filter {
-                        it.pairNumber == "SIXTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 7,
-                    pairs = thursdayPairs.filter {
-                        it.pairNumber == "SEVENTH"
-                    }
-                ),
-            )
-        )
-
-        val fridaySlots = DayEntity(
-            weekDay = "Friday",
-            day = "",
-            countClasses = 0,
-            timeSlots = listOf(
-                TimeSlotEntity(
-                    slotNumber = 1,
-                    pairs = fridayPairs.filter {
-                        it.pairNumber == "FIRST"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 2,
-                    pairs = fridayPairs.filter {
-                        it.pairNumber == "SECOND"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 3,
-                    pairs = fridayPairs.filter {
-                        it.pairNumber == "THIRD"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 4,
-                    pairs = fridayPairs.filter {
-                        it.pairNumber == "FOURTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 5,
-                    pairs = fridayPairs.filter {
-                        it.pairNumber == "FIFTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 6,
-                    pairs = fridayPairs.filter {
-                        it.pairNumber == "SIXTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 7,
-                    pairs = fridayPairs.filter {
-                        it.pairNumber == "SEVENTH"
-                    }
-                ),
-            )
-        )
-
-        val saturdaySlots = DayEntity(
-            weekDay = "Saturday",
-            day = "",
-            countClasses = 0,
-            timeSlots = listOf(
-                TimeSlotEntity(
-                    slotNumber = 1,
-                    pairs = saturdayPairs.filter {
-                        it.pairNumber == "FIRST"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 2,
-                    pairs = saturdayPairs.filter {
-                        it.pairNumber == "SECOND"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 3,
-                    pairs = saturdayPairs.filter {
-                        it.pairNumber == "THIRD"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 4,
-                    pairs = saturdayPairs.filter {
-                        it.pairNumber == "FOURTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 5,
-                    pairs = saturdayPairs.filter {
-                        it.pairNumber == "FIFTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 6,
-                    pairs = saturdayPairs.filter {
-                        it.pairNumber == "SIXTH"
-                    }
-                ),
-                TimeSlotEntity(
-                    slotNumber = 7,
-                    pairs = saturdayPairs.filter {
-                        it.pairNumber == "SEVENTH"
-                    }
-                ),
-            )
-        )
-
-        _state.update {
-            it.copy(
-                mondayPairs = mondayPairs,
-                tuesdayPairs = tuesdayPairs,
-                wednesdayPairs = wednesdayPairs,
-                thursdayPairs = thursdayPairs,
-                fridayPairs = fridayPairs,
-                saturdayPairs = saturdayPairs,
-                timetable = WeekEntity(
-                    days = listOf(
-                        mondaySlots, tuesdaySlots, wednesdaySlots, thursdaySlots, fridaySlots, saturdaySlots
-                    )
+            val mondaySlots = DayEntity(
+                weekDay = "Monday",
+                day = "",
+                countClasses = 0,
+                timeSlots = listOf(
+                    TimeSlotEntity(
+                        slotNumber = 1,
+                        pairs = mondayPairs.filter {
+                            it.pairNumber == "FIRST"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 2,
+                        pairs = mondayPairs.filter {
+                            it.pairNumber == "SECOND"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 3,
+                        pairs = mondayPairs.filter {
+                            it.pairNumber == "THIRD"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 4,
+                        pairs = mondayPairs.filter {
+                            it.pairNumber == "FOURTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 5,
+                        pairs = mondayPairs.filter {
+                            it.pairNumber == "FIFTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 6,
+                        pairs = mondayPairs.filter {
+                            it.pairNumber == "SIXTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 7,
+                        pairs = mondayPairs.filter {
+                            it.pairNumber == "SEVENTH"
+                        }
+                    ),
                 )
             )
+
+            val tuesdaySlots = DayEntity(
+                weekDay = "Tuesday",
+                day = "",
+                countClasses = 0,
+                timeSlots = listOf(
+                    TimeSlotEntity(
+                        slotNumber = 1,
+                        pairs = tuesdayPairs.filter {
+                            it.pairNumber == "FIRST"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 2,
+                        pairs = tuesdayPairs.filter {
+                            it.pairNumber == "SECOND"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 3,
+                        pairs = tuesdayPairs.filter {
+                            it.pairNumber == "THIRD"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 4,
+                        pairs = tuesdayPairs.filter {
+                            it.pairNumber == "FOURTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 5,
+                        pairs = tuesdayPairs.filter {
+                            it.pairNumber == "FIFTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 6,
+                        pairs = tuesdayPairs.filter {
+                            it.pairNumber == "SIXTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 7,
+                        pairs = tuesdayPairs.filter {
+                            it.pairNumber == "SEVENTH"
+                        }
+                    ),
+                )
+            )
+
+            val wednesdaySlots = DayEntity(
+                weekDay = "Wednesday",
+                day = "",
+                countClasses = 0,
+                timeSlots = listOf(
+                    TimeSlotEntity(
+                        slotNumber = 1,
+                        pairs = wednesdayPairs.filter {
+                            it.pairNumber == "FIRST"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 2,
+                        pairs = wednesdayPairs.filter {
+                            it.pairNumber == "SECOND"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 3,
+                        pairs = wednesdayPairs.filter {
+                            it.pairNumber == "THIRD"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 4,
+                        pairs = wednesdayPairs.filter {
+                            it.pairNumber == "FOURTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 5,
+                        pairs = wednesdayPairs.filter {
+                            it.pairNumber == "FIFTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 6,
+                        pairs = wednesdayPairs.filter {
+                            it.pairNumber == "SIXTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 7,
+                        pairs = wednesdayPairs.filter {
+                            it.pairNumber == "SEVENTH"
+                        }
+                    ),
+                )
+            )
+
+            val thursdaySlots = DayEntity(
+                weekDay = "Thursday",
+                day = "",
+                countClasses = 0,
+                timeSlots = listOf(
+                    TimeSlotEntity(
+                        slotNumber = 1,
+                        pairs = thursdayPairs.filter {
+                            it.pairNumber == "FIRST"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 2,
+                        pairs = thursdayPairs.filter {
+                            it.pairNumber == "SECOND"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 3,
+                        pairs = thursdayPairs.filter {
+                            it.pairNumber == "THIRD"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 4,
+                        pairs = thursdayPairs.filter {
+                            it.pairNumber == "FOURTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 5,
+                        pairs = thursdayPairs.filter {
+                            it.pairNumber == "FIFTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 6,
+                        pairs = thursdayPairs.filter {
+                            it.pairNumber == "SIXTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 7,
+                        pairs = thursdayPairs.filter {
+                            it.pairNumber == "SEVENTH"
+                        }
+                    ),
+                )
+            )
+
+            val fridaySlots = DayEntity(
+                weekDay = "Friday",
+                day = "",
+                countClasses = 0,
+                timeSlots = listOf(
+                    TimeSlotEntity(
+                        slotNumber = 1,
+                        pairs = fridayPairs.filter {
+                            it.pairNumber == "FIRST"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 2,
+                        pairs = fridayPairs.filter {
+                            it.pairNumber == "SECOND"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 3,
+                        pairs = fridayPairs.filter {
+                            it.pairNumber == "THIRD"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 4,
+                        pairs = fridayPairs.filter {
+                            it.pairNumber == "FOURTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 5,
+                        pairs = fridayPairs.filter {
+                            it.pairNumber == "FIFTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 6,
+                        pairs = fridayPairs.filter {
+                            it.pairNumber == "SIXTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 7,
+                        pairs = fridayPairs.filter {
+                            it.pairNumber == "SEVENTH"
+                        }
+                    ),
+                )
+            )
+
+            val saturdaySlots = DayEntity(
+                weekDay = "Saturday",
+                day = "",
+                countClasses = 0,
+                timeSlots = listOf(
+                    TimeSlotEntity(
+                        slotNumber = 1,
+                        pairs = saturdayPairs.filter {
+                            it.pairNumber == "FIRST"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 2,
+                        pairs = saturdayPairs.filter {
+                            it.pairNumber == "SECOND"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 3,
+                        pairs = saturdayPairs.filter {
+                            it.pairNumber == "THIRD"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 4,
+                        pairs = saturdayPairs.filter {
+                            it.pairNumber == "FOURTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 5,
+                        pairs = saturdayPairs.filter {
+                            it.pairNumber == "FIFTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 6,
+                        pairs = saturdayPairs.filter {
+                            it.pairNumber == "SIXTH"
+                        }
+                    ),
+                    TimeSlotEntity(
+                        slotNumber = 7,
+                        pairs = saturdayPairs.filter {
+                            it.pairNumber == "SEVENTH"
+                        }
+                    ),
+                )
+            )
+
+            _state.update {
+                it.copy(
+                    mondayPairs = mondayPairs,
+                    tuesdayPairs = tuesdayPairs,
+                    wednesdayPairs = wednesdayPairs,
+                    thursdayPairs = thursdayPairs,
+                    fridayPairs = fridayPairs,
+                    saturdayPairs = saturdayPairs,
+                    timetable = WeekEntity(
+                        days = listOf(
+                            mondaySlots, tuesdaySlots, wednesdaySlots, thursdaySlots, fridaySlots, saturdaySlots
+                        )
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            offerEvent(MeetingsScreenEvent.ShowSnackbar((e.localizedMessage ?: "Ошибка сервера")))
         }
     }
 

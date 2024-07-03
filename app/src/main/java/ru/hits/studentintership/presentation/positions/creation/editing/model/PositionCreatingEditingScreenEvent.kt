@@ -1,5 +1,7 @@
 package ru.hits.studentintership.presentation.positions.creation.editing.model
 
-sealed interface PositionCreatingEditingScreenEvent {
-    data object NavigateToPositionsScreen : PositionCreatingEditingScreenEvent
+import ru.hits.studentintership.core.Event
+
+sealed class PositionCreatingEditingScreenEvent : Event {
+    data class ShowSnackbar(val message: String) : PositionCreatingEditingScreenEvent()
 }

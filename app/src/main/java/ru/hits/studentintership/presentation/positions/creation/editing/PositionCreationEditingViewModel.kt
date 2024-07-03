@@ -12,15 +12,19 @@ import kotlinx.coroutines.launch
 import ru.hits.studentintership.data.other.OtherService
 import ru.hits.studentintership.data.positions.api.PositionsService
 import ru.hits.studentintership.common.data.model.Company
+import ru.hits.studentintership.core.Event
+import ru.hits.studentintership.core.EventQueue
 import ru.hits.studentintership.data.positions.model.CreatePositionBodyDto
 import ru.hits.studentintership.data.positions.model.PositionDto
 import ru.hits.studentintership.data.positions.model.ProgramLanguage
 import ru.hits.studentintership.data.positions.model.Speciality
+import ru.hits.studentintership.presentation.positions.creation.editing.model.PositionCreatingEditingScreenEvent
 import ru.hits.studentintership.presentation.positions.creation.editing.model.PositionCreationEditingState
 import ru.hits.studentintership.presentation.positions.creation.editing.navigation.PositionCreationEditingDestination
 import ru.hits.studentintership.presentation.positions.model.PositionStatus
 import ru.hits.studentintership.presentation.positions.model.toPositionStatusEnum
 import ru.hits.studentintership.presentation.positions.model.toUi
+import ru.hits.studentintership.presentation.profile.model.ProfileEvent
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,6 +35,8 @@ class PositionCreationEditingViewModel @Inject constructor(
 ) : ViewModel() {
     private val _state = MutableStateFlow(createInitialState())
     val state = _state.asStateFlow()
+
+    val screenEvents: EventQueue = EventQueue()
 
     private val currentScreenState: PositionCreationEditingState get() = _state.value
 
@@ -58,6 +64,10 @@ class PositionCreationEditingViewModel @Inject constructor(
             }
     }
 
+    fun offerEvent(event: Event) {
+        screenEvents.offerEvent(event)
+    }
+
     private fun createInitialState() = PositionCreationEditingState(
         position = null,
         positions = emptyList(),
@@ -75,68 +85,80 @@ class PositionCreationEditingViewModel @Inject constructor(
     )
 
     private fun getPosition() = viewModelScope.launch {
-        positions = positionsService.getPositions(userId).toMutableList()
-        val position = positions.find { it.id == positionId }!!
-        _state.update { state ->
-            state.copy(
-                position = position,
-                positions = positions,
-                status = position.positionStatus.toPositionStatusEnum().toUi(),
-                selectedStatus = position.positionStatus.toPositionStatusEnum(),
-                company = position.company.name,
-                selectedCompany = position.company,
-                speciality = position.speciality.name,
-                selectedSpeciality = position.speciality,
-                programLanguage = position.programLanguage.name,
-                selectedProgramLanguage = position.programLanguage,
-            )
+        try {
+            positions = positionsService.getPositions(userId).toMutableList()
+            val position = positions.find { it.id == positionId }!!
+            _state.update { state ->
+                state.copy(
+                    position = position,
+                    positions = positions,
+                    status = position.positionStatus.toPositionStatusEnum().toUi(),
+                    selectedStatus = position.positionStatus.toPositionStatusEnum(),
+                    company = position.company.name,
+                    selectedCompany = position.company,
+                    speciality = position.speciality.name,
+                    selectedSpeciality = position.speciality,
+                    programLanguage = position.programLanguage.name,
+                    selectedProgramLanguage = position.programLanguage,
+                )
+            }
+        } catch (e: Exception) {
+            offerEvent(PositionCreatingEditingScreenEvent.ShowSnackbar(e.localizedMessage ?: "Ошибка сервера"))
         }
     }
 
     private fun getInfo() = viewModelScope.launch {
-        val companiesRes = async { otherService.getCompanies() }
-        val specialitiesRes = async { otherService.getSpecialities() }
-        val programLanguagesRes = async { otherService.getProgramLanguages() }
+        try {
+            val companiesRes = async { otherService.getCompanies() }
+            val specialitiesRes = async { otherService.getSpecialities() }
+            val programLanguagesRes = async { otherService.getProgramLanguages() }
 
-        val result = Triple(companiesRes.await(), specialitiesRes.await(), programLanguagesRes.await())
+            val result = Triple(companiesRes.await(), specialitiesRes.await(), programLanguagesRes.await())
 
-        val companies = result.first
-        val specialities = result.second
-        val programLanguages = result.third
+            val companies = result.first
+            val specialities = result.second
+            val programLanguages = result.third
 
-        _state.update {
-            it.copy(
-                companies = companies,
-                specialities = specialities,
-                programLanguages = programLanguages,
-                selectedCompany = companies.firstOrNull(),
-                selectedSpeciality = specialities.firstOrNull(),
-                selectedProgramLanguage = programLanguages.firstOrNull()
-            )
+            _state.update {
+                it.copy(
+                    companies = companies,
+                    specialities = specialities,
+                    programLanguages = programLanguages,
+                    selectedCompany = companies.firstOrNull(),
+                    selectedSpeciality = specialities.firstOrNull(),
+                    selectedProgramLanguage = programLanguages.firstOrNull()
+                )
+            }
+        } catch (e: Exception) {
+            offerEvent(PositionCreatingEditingScreenEvent.ShowSnackbar(e.localizedMessage ?: "Ошибка сервера"))
         }
     }
 
     fun createPosition(priority: Int, status: String, programLanguageId: String, specialityId: String, companyId: String) = viewModelScope.launch {
-        positionsService.createPosition(
-            createPositionBodyDto = CreatePositionBodyDto(
-                priority = positionsSize,
-                positionStatus = status,
-                programLanguageId = programLanguageId,
-                specialityId = specialityId,
-                companyId = companyId,
+        try {
+            positionsService.createPosition(
+                createPositionBodyDto = CreatePositionBodyDto(
+                    priority = positionsSize,
+                    positionStatus = status,
+                    programLanguageId = programLanguageId,
+                    specialityId = specialityId,
+                    companyId = companyId,
+                )
             )
-        )
-        _state.update {
-            it.copy(
-                status = "",
-                selectedStatus = PositionStatus.DOESNT_DO_ANYTHING,
-                company = "",
-                selectedCompany = null,
-                speciality = "",
-                selectedSpeciality = null,
-                programLanguage = "",
-                selectedProgramLanguage = null,
-            )
+            _state.update {
+                it.copy(
+                    status = "",
+                    selectedStatus = PositionStatus.DOESNT_DO_ANYTHING,
+                    company = "",
+                    selectedCompany = null,
+                    speciality = "",
+                    selectedSpeciality = null,
+                    programLanguage = "",
+                    selectedProgramLanguage = null,
+                )
+            }
+        } catch (e: Exception) {
+            offerEvent(PositionCreatingEditingScreenEvent.ShowSnackbar(e.localizedMessage ?: "Ошибка сервера"))
         }
     }
 
@@ -145,7 +167,11 @@ class PositionCreationEditingViewModel @Inject constructor(
     }
 
     private fun changePositionStatus(positionId: String, status: String) = viewModelScope.launch {
-        positionsService.changePositionStatus(positionId = positionId, status = status)
+        try {
+            positionsService.changePositionStatus(positionId = positionId, status = status)
+        } catch (e: Exception) {
+            offerEvent(PositionCreatingEditingScreenEvent.ShowSnackbar(e.localizedMessage ?: "Ошибка сервера"))
+        }
     }
 
     // COMPANY

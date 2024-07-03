@@ -176,10 +176,6 @@ fun ProfileScreen(
                     //         }
                     //     }
                     // }
-                } else {
-                    TextButton(onClick = { navigateToMyPositions(user.id) }) {
-                        Text(text = "Мои позиции")
-                    }
                 }
             }
 

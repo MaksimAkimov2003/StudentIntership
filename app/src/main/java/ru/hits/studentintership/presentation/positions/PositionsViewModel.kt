@@ -9,9 +9,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.hits.studentintership.core.Event
+import ru.hits.studentintership.core.EventQueue
 import ru.hits.studentintership.data.positions.api.PositionsService
 import ru.hits.studentintership.data.positions.model.PositionDto
 import ru.hits.studentintership.data.positions.repository.PositionsRepository
+import ru.hits.studentintership.presentation.positions.model.PositionsScreenEvent
 import ru.hits.studentintership.presentation.positions.model.PositionsState
 import ru.hits.studentintership.presentation.positions.navigation.PositionsDestination
 import javax.inject.Inject
@@ -29,16 +32,25 @@ class PositionsViewModel @Inject constructor(
 
     private val currentScreenState: PositionsState get() = _state.value
 
+    val screenEvents: EventQueue = EventQueue()
+
+    fun offerEvent(event: Event) {
+        screenEvents.offerEvent(event)
+    }
+
     init {
         getPositions()
     }
 
     fun getPositions() = viewModelScope.launch {
-        val studentPositions = positionsService.getPositions(userId)
-        _state.update { state ->
-            state.copy(positions = studentPositions.sortedByDescending { it.priority }.toMutableList())
+        try {
+            val studentPositions = positionsService.getPositions(userId)
+            _state.update { state ->
+                state.copy(positions = studentPositions.sortedByDescending { it.priority }.toMutableList())
+            }
+        } catch(e: Exception) {
+            offerEvent(PositionsScreenEvent.ShowSnackbar(e.localizedMessage ?: "Ошибка сервера"))
         }
-
     }
 
     private fun createInitialState() =
@@ -57,11 +69,19 @@ class PositionsViewModel @Inject constructor(
     }
 
     fun deletePosition(positionId: String) = viewModelScope.launch {
-        positionsService.deletePosition(positionId = positionId)
+        try {
+            positionsService.deletePosition(positionId = positionId)
+        } catch(e: Exception) {
+            offerEvent(PositionsScreenEvent.ShowSnackbar(e.localizedMessage ?: "Ошибка сервера"))
+        }
         getPositions()
     }
 
     fun savePositionPriority() = viewModelScope.launch {
-        positionsService.changePositionPriority(positions = currentScreenState.positions.reversed().map { it.id })
+        try {
+            positionsService.changePositionPriority(positions = currentScreenState.positions.reversed().map { it.id })
+        } catch(e: Exception) {
+            offerEvent(PositionsScreenEvent.ShowSnackbar(e.localizedMessage ?: "Ошибка сервера"))
+        }
     }
 }

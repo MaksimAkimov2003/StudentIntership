@@ -18,12 +18,14 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,11 +36,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 import ru.hits.studentintership.data.meetings.MeetingDto
+import ru.hits.studentintership.presentation.common.ErrorSnackbar
 import ru.hits.studentintership.presentation.meetings.model.DayEntity
+import ru.hits.studentintership.presentation.meetings.model.MeetingsScreenEvent
 import ru.hits.studentintership.presentation.meetings.model.MeetingsState
 import ru.hits.studentintership.presentation.meetings.ui.ScrollTable
 import ru.hits.studentintership.presentation.meetings.ui.TimetableAdapter
+import ru.hits.studentintership.presentation.positions.model.PositionsScreenEvent
 
 @Composable
 fun MeetingsScreen(
@@ -48,12 +54,37 @@ fun MeetingsScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    val snackbarState = remember { SnackbarHostState() }
+    val snackbarScope = rememberCoroutineScope()
+    val showSnackbar: (message: String) -> Unit = { message ->
+        snackbarScope.launch {
+            snackbarState.showSnackbar(message)
+        }
+    }
+
+    viewModel.screenEvents.CollectEvent { event ->
+        when (event) {
+            is MeetingsScreenEvent.ShowSnackbar -> showSnackbar(
+                event.message
+            )
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(16.dp, 16.dp, 16.dp, 32.dp)) {
             RenderContentState(state, context, navController)
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
+            ErrorSnackbar(
+                snackbarHostState = snackbarState
+            )
         }
     }
 }
